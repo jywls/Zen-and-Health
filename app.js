@@ -40,11 +40,11 @@ class ZenPuzzlesApp {
 
         // Untie Rope controls
         document.getElementById('ropeReset')?.addEventListener('click', () => {
-            if (untieRopeGame) untieRopeGame.reset();
+            if (typeof resetUntieRope === 'function') resetUntieRope();
         });
 
         document.getElementById('ropeUndo')?.addEventListener('click', () => {
-            if (untieRopeGame) untieRopeGame.undo();
+            if (typeof undoUntieRope === 'function') undoUntieRope();
         });
 
         // Victory modal buttons
@@ -70,12 +70,12 @@ class ZenPuzzlesApp {
         keyboardManager.onKey('r', () => {
             if (this.currentGame === 'colorSort') colorSortGame.reset();
             else if (this.currentGame === 'paintNumbers') paintNumbersGame.reset();
-            else if (this.currentGame === 'untieRope') untieRopeGame.reset();
+            else if (this.currentGame === 'untieRope' && typeof resetUntieRope === 'function') resetUntieRope();
         });
         keyboardManager.onKey('u', () => {
             if (this.currentGame === 'colorSort') colorSortGame.undo();
             else if (this.currentGame === 'paintNumbers') paintNumbersGame.undo();
-            else if (this.currentGame === 'untieRope') untieRopeGame.undo();
+            else if (this.currentGame === 'untieRope' && typeof undoUntieRope === 'function') undoUntieRope();
         });
     }
 
@@ -90,7 +90,9 @@ class ZenPuzzlesApp {
             paintNumbersGame.initialize(level);
             this.showScreen('paintNumbersScreen');
         } else if (game === 'untieRope') {
-            untieRopeGame.initialize(level);
+            if (typeof initUntieRope === 'function') {
+                initUntieRope(level);
+            }
             this.showScreen('untieRopeScreen');
         }
     }
