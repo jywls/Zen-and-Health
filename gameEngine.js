@@ -41,12 +41,12 @@ class GameEngine {
             condition: (stats) => stats.artistPaintTime && Object.values(stats.artistPaintTime).some(v => v)
         },
         ropeMaster: {
-            id: 'ropeMaster',
-            name: 'Rope Master',
-            icon: '🥋',
-            description: 'Untie rope with minimal cuts',
-            condition: (stats) => stats.ropeMasterCuts && Object.values(stats.ropeMasterCuts).some(v => v)
-        },
+        id: 'ropeMaster',
+        name: 'Rope Master',
+        icon: '🧗',
+        description: 'Complete Untie the Rope with minimal moves',
+        condition: (stats) => stats.ropeMasterMoves && Object.values(stats.ropeMasterMoves).some(v => v)
+    },
         anxietyRelief: {
             id: 'anxietyRelief',
             name: 'Anxiety Relief',
