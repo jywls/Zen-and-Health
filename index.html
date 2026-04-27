@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zen Puzzles - Therapeutic Game Suite</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <!-- Main Menu -->
+        <div id="mainMenu" class="screen active">
+            <div class="menu-container">
+                <h1 class="app-title">🧘 Zen Puzzles</h1>
+                <p class="subtitle">Therapeutic Games for Anxiety Relief</p>
+                
+                <div class="menu-grid">
+                    <button class="menu-btn game-btn" data-game="colorSort">
+                        <span class="icon">🎨</span>
+                        <span class="name">Color Sort</span>
+                        <span class="desc">Sort & Organize</span>
+                    </button>
+                    
+                    <button class="menu-btn game-btn" data-game="paintNumbers">
+                        <span class="icon">🖌️</span>
+                        <span class="name">Paint by Numbers</span>
+                        <span class="desc">Creative Expression</span>
+                    </button>
+                    
+                    <button class="menu-btn game-btn" data-game="untieRope">
+                        <span class="icon">🪢</span>
+                        <span class="name">Untie the Rope</span>
+                        <span class="desc">Problem Solving</span>
+                    </button>
+                </div>
+
+                <div class="menu-footer">
+                    <button class="menu-btn secondary-btn" id="statsBtn">
+                        📊 My Statistics
+                    </button>
+                    <button class="menu-btn secondary-btn" id="helpBtn">
+                        ❓ How to Play
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Sort Game -->
+        <div id="colorSortScreen" class="screen">
+            <div class="game-header">
+                <button class="back-btn">← Back</button>
+                <h2>🎨 Color Sort - Level <span id="colorSortLevel">1</span></h2>
+                <div class="header-stats">
+                    <span>Moves: <strong id="colorSortMoves">0</strong></span>
+                </div>
+            </div>
+
+            <div class="game-container">
+                <div id="colorSortCanvas" class="game-canvas"></div>
+                <div class="game-controls">
+                    <button class="control-btn" id="colorSortReset">↺ Reset Level</button>
+                    <button class="control-btn" id="colorSortUndo">⟲ Undo Move</button>
+                    <button class="control-btn" id="colorSortNext" style="display:none;">Next Level →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paint by Numbers Game -->
+        <div id="paintNumbersScreen" class="screen">
+            <div class="game-header">
+                <button class="back-btn">← Back</button>
+                <h2>🖌️ Paint by Numbers - Level <span id="paintNumbersLevel">1</span></h2>
+                <div class="header-stats">
+                    <span>Progress: <strong id="paintProgress">0</strong>%</span>
+                </div>
+            </div>
+
+            <div class="game-container">
+                <div id="paintNumbersCanvas" class="game-canvas">
+                    <svg id="paintSvg"></svg>
+                </div>
+                <div class="paint-sidebar">
+                    <div class="color-palette" id="colorPalette"></div>
+                    <button class="control-btn" id="paintReset">↺ Reset</button>
+                    <button class="control-btn" id="paintUndo">⟲ Undo</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Untie the Rope Game -->
+        <div id="untieRopeScreen" class="screen">
+            <div class="game-header">
+                <button class="back-btn">← Back</button>
+                <h2>🪢 Untie the Rope - Level <span id="untieRopeLevel">1</span></h2>
+                <div class="header-stats">
+                    <span>Cuts: <strong id="ropeCuts">0</strong>/<span id="ropeCutsRequired">0</span></span>
+                </div>
+            </div>
+
+            <div class="game-container">
+                <canvas id="ropeCanvas" class="game-canvas"></canvas>
+                <div class="game-controls">
+                    <button class="control-btn" id="ropeReset">↺ Reset Level</button>
+                    <button class="control-btn" id="ropeUndo">⟲ Undo Cut</button>
+                    <button class="control-btn" id="ropeNext" style="display:none;">Next Level →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Screen -->
+        <div id="statsScreen" class="screen">
+            <div class="game-header">
+                <button class="back-btn">← Back</button>
+                <h2>📊 Your Statistics</h2>
+            </div>
+
+            <div class="stats-container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>🎮 Games Completed</h3>
+                        <p class="stat-value" id="totalGamesCompleted">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>⏱️ Total Play Time</h3>
+                        <p class="stat-value" id="totalPlayTime">0h 0m</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🏆 Achievements</h3>
+                        <p class="stat-value" id="totalAchievements">0/8</p>
+                    </div>
+                </div>
+
+                <div class="achievements-section">
+                    <h3>🏅 Achievements Unlocked</h3>
+                    <div class="achievements-list" id="achievementsList"></div>
+                </div>
+
+                <div class="game-stats">
+                    <h3>Game Progress</h3>
+                    <div id="gameStatsDetail"></div>
+                </div>
+
+                <button class="control-btn danger-btn" id="clearStatsBtn">Clear All Data</button>
+            </div>
+        </div>
+
+        <!-- Help Screen -->
+        <div id="helpScreen" class="screen">
+            <div class="game-header">
+                <button class="back-btn">← Back</button>
+                <h2>❓ How to Play</h2>
+            </div>
+
+            <div class="help-container">
+                <div class="help-section">
+                    <h3>🎨 Color Sort</h3>
+                    <p>Sort colored balls into matching tubes using strategy and patience.</p>
+                    <ul>
+                        <li>Click a tube with balls to select it</li>
+                        <li>Click an empty or matching-color tube to move balls</li>
+                        <li>Match all balls by color to complete the level</li>
+                        <li>No time pressure—play at your own pace</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h3>🖌️ Paint by Numbers</h3>
+                    <p>Color numbered regions to create beautiful artwork.</p>
+                    <ul>
+                        <li>Select a color from the palette</li>
+                        <li>Click numbered regions to paint them</li>
+                        <li>Paint each region with its assigned number color</li>
+                        <li>Complete the artwork to move to the next painting</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h3>🪢 Untie the Rope</h3>
+                    <p>Strategically cut rope segments to untangle complex knots.</p>
+                    <ul>
+                        <li>Click on rope segments to cut them</li>
+                        <li>Cut strategically to untangle the ropes</li>
+                        <li>Complete the level when you reach the cut requirement</li>
+                        <li>Use logic to minimize unnecessary cuts</li>
+                    </ul>
+                </div>
+
+                <div class="help-section tips">
+                    <h3>💡 Tips for Anxiety Management</h3>
+                    <ul>
+                        <li>🚫 No time limits—play at your own pace</li>
+                        <li>😊 No fail states—mistakes aren't punished</li>
+                        <li>🎯 Focus on the present moment</li>
+                        <li>🧘 Use deep breathing between moves</li>
+                        <li>⏸️ Take breaks whenever you need</li>
+                        <li>📈 Track your progress and celebrate improvements</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Victory Modal -->
+        <div id="victoryModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <h2>🎉 Level Complete!</h2>
+                <p id="victoryMessage"></p>
+                <div class="modal-stats" id="modalStats"></div>
+                <button class="control-btn" id="nextLevelBtn">Next Level →</button>
+                <button class="control-btn secondary-btn" id="menuFromVictoryBtn">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="gameEngine.js"></script>
+    <script src="colorSort.js"></script>
+    <script src="paintNumbers.js"></script>
+    <script src="untieRope.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
