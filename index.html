@@ -97,22 +97,21 @@
         <div id="untieRopeScreen" class="screen">
             <div class="game-header">
                 <button class="back-btn">← Back</button>
-                <h2>🪢 Untie the Rope - Level <span id="untieRopeLevel">1</span></h2>
+                <h2>🔗 Untie the Rope - Level <span id="untieRopeLevel">1</span></h2>
                 <div class="header-stats">
-                    <span>Cuts: <strong id="ropeCuts">0</strong>/<span id="ropeCutsRequired">0</span></span>
+                    <span>Moves: <strong id="ropeMoves">0</strong></span>
                 </div>
             </div>
-
+        
             <div class="game-container">
-                <canvas id="ropeCanvas" class="game-canvas"></canvas>
+                <canvas id="ropeCanvas" class="game-canvas" style="max-width: 100%; max-height: 600px;"></canvas>
                 <div class="game-controls">
                     <button class="control-btn" id="ropeReset">↺ Reset Level</button>
-                    <button class="control-btn" id="ropeUndo">⟲ Undo Cut</button>
+                    <button class="control-btn" id="ropeUndo">⟲ Undo Move</button>
                     <button class="control-btn" id="ropeNext" style="display:none;">Next Level →</button>
                 </div>
             </div>
         </div>
-
         <!-- Statistics Screen -->
         <div id="statsScreen" class="screen">
             <div class="game-header">
