@@ -1,4 +1,4 @@
-// Untie the Rope Game - Physics-based puzzle solving
+// Untie the Rope Game - Polished Version
 class UntieRopeGame {
     constructor() {
         this.level = 1;
@@ -38,7 +38,6 @@ class UntieRopeGame {
     }
 
     setupBoard() {
-        // Create empty grid with available slots
         this.boardSlots = [];
         for (let row = 0; row < 10; row++) {
             for (let col = 0; col < 10; col++) {
@@ -56,62 +55,14 @@ class UntieRopeGame {
 
     generatePuzzle() {
         const configs = [
-            // Level 1: Simple - 2 ropes, easy to untangle
-            {
-                ropes: 2,
-                pins: 6,
-                complexity: 'simple',
-                solution: 'straightforward'
-            },
-            // Level 2: Two colors - 2 ropes different colors, slightly tangled
-            {
-                ropes: 2,
-                pins: 8,
-                complexity: 'easy',
-                solution: 'one_move'
-            },
-            // Level 3: Triple play - 3 ropes, basic puzzle
-            {
-                ropes: 3,
-                pins: 10,
-                complexity: 'medium',
-                solution: 'three_moves'
-            },
-            // Level 4: Complex tangle - 3 ropes, more entanglement
-            {
-                ropes: 3,
-                pins: 12,
-                complexity: 'medium',
-                solution: 'sequence'
-            },
-            // Level 5: Master puzzle - 4 ropes, strategic thinking needed
-            {
-                ropes: 4,
-                pins: 14,
-                complexity: 'hard',
-                solution: 'complex_sequence'
-            },
-            // Level 6: Expert challenge - 4 ropes, deep tangle
-            {
-                ropes: 4,
-                pins: 16,
-                complexity: 'hard',
-                solution: 'expert'
-            },
-            // Level 7: Ultimate - 5 ropes, very complex
-            {
-                ropes: 5,
-                pins: 18,
-                complexity: 'expert',
-                solution: 'ultimate'
-            },
-            // Level 8: Zen Master - 5 ropes, maximum complexity
-            {
-                ropes: 5,
-                pins: 20,
-                complexity: 'expert',
-                solution: 'zen_master'
-            }
+            { ropes: 2, pins: 6, complexity: 'simple' },
+            { ropes: 2, pins: 8, complexity: 'easy' },
+            { ropes: 3, pins: 10, complexity: 'medium' },
+            { ropes: 3, pins: 12, complexity: 'medium' },
+            { ropes: 4, pins: 14, complexity: 'hard' },
+            { ropes: 4, pins: 16, complexity: 'hard' },
+            { ropes: 5, pins: 18, complexity: 'expert' },
+            { ropes: 5, pins: 20, complexity: 'expert' }
         ];
 
         const config = configs[this.level - 1];
@@ -121,7 +72,7 @@ class UntieRopeGame {
         const ropeColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#a855f7'];
         const usedSlots = new Set();
 
-        // Generate pins for the puzzle
+        // Generate pins
         for (let i = 0; i < config.pins; i++) {
             let slot;
             let attempts = 0;
@@ -132,16 +83,11 @@ class UntieRopeGame {
 
             if (attempts < 20) {
                 usedSlots.add(`${slot.row},${slot.col}`);
-                this.pins.push({
-                    id: i,
-                    x: slot.x,
-                    y: slot.y,
-                    ropeLoops: [] // Which ropes pass through this pin
-                });
+                this.pins.push({ id: i, x: slot.x, y: slot.y, ropeLoops: [] });
             }
         }
 
-        // Generate ropes with loops through pins
+        // Generate ropes
         for (let ropeIndex = 0; ropeIndex < config.ropes; ropeIndex++) {
             const color = ropeColors[ropeIndex % ropeColors.length];
             const startSlot = this.boardSlots[Math.floor(Math.random() * this.boardSlots.length)];
@@ -158,19 +104,15 @@ class UntieRopeGame {
                     startY: startSlot.y,
                     endX: endSlot.x,
                     endY: endSlot.y,
-                    loops: this.generateRopeLoops(ropeIndex, config.complexity)
+                    loops: this.generateRopeLoops(config.complexity)
                 };
-
                 this.ropes.push(rope);
             }
         }
-
-        this.updateMovesRequired();
     }
 
-    generateRopeLoops(ropeIndex, complexity) {
-        // Create loops through random pins to create the tangle
-        const loopCount = complexity === 'simple' ? 2 : 
+    generateRopeLoops(complexity) {
+        const loopCount = complexity === 'simple' ? 2 :
                          complexity === 'easy' ? 3 :
                          complexity === 'medium' ? 4 :
                          complexity === 'hard' ? 5 : 6;
@@ -179,22 +121,9 @@ class UntieRopeGame {
         const shuffledPins = [...this.pins].sort(() => Math.random() - 0.5);
 
         for (let i = 0; i < Math.min(loopCount, shuffledPins.length); i++) {
-            loops.push({
-                pinId: shuffledPins[i].id,
-                pinX: shuffledPins[i].x,
-                pinY: shuffledPins[i].y
-            });
+            loops.push({ pinId: shuffledPins[i].id, pinX: shuffledPins[i].x, pinY: shuffledPins[i].y });
         }
-
         return loops;
-    }
-
-    updateMovesRequired() {
-        // Calculate estimated moves needed to solve (for reference)
-        const minMoves = Math.ceil(this.ropes.length * 1.5);
-        const maxMoves = Math.ceil(this.ropes.length * 3);
-        this.minMovesEstimate = minMoves;
-        this.maxMovesEstimate = maxMoves;
     }
 
     setupCanvasEvents() {
@@ -209,7 +138,6 @@ class UntieRopeGame {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // Check if clicked on a rope
         for (let i = 0; i < this.ropes.length; i++) {
             const rope = this.ropes[i];
             if (this.isPointNearRope(x, y, rope)) {
@@ -226,7 +154,6 @@ class UntieRopeGame {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // Update cursor
         if (this.selectedRope !== null) {
             this.canvas.style.cursor = 'grabbing';
             const rope = this.ropes[this.selectedRope];
@@ -238,7 +165,6 @@ class UntieRopeGame {
 
             this.render();
         } else {
-            // Check if hovering over rope
             let hovering = false;
             for (let i = 0; i < this.ropes.length; i++) {
                 if (this.isPointNearRope(x, y, this.ropes[i])) {
@@ -253,19 +179,21 @@ class UntieRopeGame {
     handleMouseUp(e) {
         if (this.selectedRope !== null) {
             const rope = this.ropes[this.selectedRope];
-            
-            // Snap to grid
             rope.startX = Math.round(rope.startX / this.cellSize) * this.cellSize + this.cellSize / 2 + 50;
             rope.startY = Math.round(rope.startY / this.cellSize) * this.cellSize + this.cellSize / 2 + 50;
 
-            this.moves++;
-            document.getElementById('ropeMoves').textContent = this.moves;
+            if (rope.startX !== this.dragStart.startX || rope.startY !== this.dragStart.startY) {
+                this.moves++;
+                document.getElementById('ropeMoves').textContent = this.moves;
+            }
 
             this.selectedRope = null;
             this.dragStart = null;
 
-            // Check if puzzle is solved
             if (this.isPuzzleSolved()) {
+                for (let i = this.ropes.length - 1; i >= 0; i--) {
+                    this.animateRopePop(i);
+                }
                 this.levelComplete();
             }
 
@@ -276,24 +204,15 @@ class UntieRopeGame {
 
     isPointNearRope(x, y, rope) {
         const clickRadius = 20;
-
-        // Check start point
         const distStart = Math.hypot(x - rope.startX, y - rope.startY);
         if (distStart < clickRadius) return true;
-
-        // Check end point
         const distEnd = Math.hypot(x - rope.endX, y - rope.endY);
         if (distEnd < clickRadius) return true;
-
-        // Check path (simplified)
-        const pathDist = this.distanceToPath(x, y, rope);
-        return pathDist < clickRadius;
+        return this.distanceToPath(x, y, rope) < clickRadius;
     }
 
     distanceToPath(x, y, rope) {
         let minDist = Infinity;
-
-        // Check distance to start->end line
         const dx = rope.endX - rope.startX;
         const dy = rope.endY - rope.startY;
         const t = Math.max(0, Math.min(1, ((x - rope.startX) * dx + (y - rope.startY) * dy) / (dx * dx + dy * dy)));
@@ -301,65 +220,81 @@ class UntieRopeGame {
         const py = rope.startY + t * dy;
         minDist = Math.hypot(x - px, y - py);
 
-        // Check distance to loops
         rope.loops.forEach(loop => {
             const loopDist = Math.hypot(x - loop.pinX, y - loop.pinY);
             minDist = Math.min(minDist, loopDist);
         });
-
         return minDist;
     }
 
-    isPuzzleSolved() {
-        // Check if all ropes are untangled
-        // Ropes are solved when they don't cross each other excessively
-        let totalIntersections = 0;
 
+    // --- Strict puzzle solved check ---
+    isPuzzleSolved() {
         for (let i = 0; i < this.ropes.length; i++) {
             for (let j = i + 1; j < this.ropes.length; j++) {
-                if (this.ropesIntersect(this.ropes[i], this.ropes[j])) {
-                    totalIntersections++;
+                if (this.ropePathsIntersect(this.ropes[i], this.ropes[j])) {
+                    return false;
                 }
             }
         }
-
-        // Puzzle is solved when there are minimal intersections
-        const threshold = Math.ceil(this.ropes.length * 0.5);
-        return totalIntersections <= threshold;
+        return true;
     }
 
-    ropesIntersect(rope1, rope2) {
-        // Check if two ropes' paths intersect
-        const dx1 = rope1.endX - rope1.startX;
-        const dy1 = rope1.endY - rope1.startY;
-        const dx2 = rope2.endX - rope2.startX;
-        const dy2 = rope2.endY - rope2.startY;
+    ropePathsIntersect(rope1, rope2) {
+        const path1 = [{x: rope1.startX, y: rope1.startY}, ...rope1.loops, {x: rope1.endX, y: rope1.endY}];
+        const path2 = [{x: rope2.startX, y: rope2.startY}, ...rope2.loops, {x: rope2.endX, y: rope2.endY}];
 
-        const cross = dx1 * dy2 - dy1 * dx2;
-        if (Math.abs(cross) < 1e-8) return false;
-
-        const t = ((rope2.startX - rope1.startX) * dy2 - (rope2.startY - rope1.startY) * dx2) / cross;
-        const u = ((rope2.startX - rope1.startX) * dy1 - (rope2.startY - rope1.startY) * dx1) / cross;
-
-        return (t >= 0 && t <= 1) && (u >= 0 && u <= 1);
-    }
-
-    undo() {
-        if (this.history.length > 0) {
-            this.ropes = this.history.pop();
-            this.moves = Math.max(0, this.moves - 1);
-            document.getElementById('ropeMoves').textContent = this.moves;
-            this.render();
+        for (let i = 0; i < path1.length - 1; i++) {
+            for (let j = 0; j < path2.length - 1; j++) {
+                if (this.segmentsIntersect(path1[i], path1[i+1], path2[j], path2[j+1])) {
+                    return true;
+                }
+            }
         }
+        return false;
     }
 
-    reset() {
-        this.initialize(this.level);
+    segmentsIntersect(p1, p2, q1, q2) {
+        const ccw = (a, b, c) => (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
+        return (ccw(p1, q1, q2) !== ccw(p2, q1, q2)) && (ccw(p1, p2, q1) !== ccw(p1, p2, q2));
     }
 
+    // --- Rope pop-off animation ---
+    animateRopePop(ropeIndex) {
+        const rope = this.ropes[ropeIndex];
+        let alpha = 1;
+        let scale = 1;
+
+        const animate = () => {
+            this.render(); // redraw background and other ropes
+
+            this.ctx.save();
+            this.ctx.globalAlpha = alpha;
+            this.ctx.strokeStyle = rope.color;
+            this.ctx.lineWidth = this.ropeWidth * scale;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(rope.startX, rope.startY);
+            rope.loops.forEach(loop => this.ctx.lineTo(loop.pinX, loop.pinY));
+            this.ctx.lineTo(rope.endX, rope.endY);
+            this.ctx.stroke();
+            this.ctx.restore();
+
+            alpha -= 0.05;
+            scale += 0.05;
+
+            if (alpha > 0) {
+                requestAnimationFrame(animate);
+            } else {
+                this.ropes.splice(ropeIndex, 1);
+                this.render();
+            }
+        };
+        animate();
+    }
+
+    // --- Level progression ---
     levelComplete() {
-        gameStateManager.updateGameLevel('untieRope', this.level + 1);
-        gameStateManager.recordBestScore('untieRope', 'bestMoves', this.level, this.moves);
         setTimeout(() => this.showVictory(), 500);
     }
 
@@ -373,17 +308,17 @@ class UntieRopeGame {
         this.initialize(this.level + 1);
     }
 
+    // --- Rendering ---
     render() {
         if (!this.ctx) return;
 
-        // Clear canvas with gradient background
         const gradient = this.ctx.createLinearGradient(0, 0, this.boardSize, this.boardSize);
         gradient.addColorStop(0, '#1a1f35');
         gradient.addColorStop(1, '#0f172a');
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.boardSize, this.boardSize);
 
-        // Draw grid
+        // Grid
         this.ctx.strokeStyle = '#334155';
         this.ctx.lineWidth = 1;
         for (let i = 0; i <= 10; i++) {
@@ -399,70 +334,54 @@ class UntieRopeGame {
             this.ctx.stroke();
         }
 
-        // Draw ropes
+        // Ropes
         this.ropes.forEach((rope, index) => {
             this.drawRope(rope, index === this.selectedRope);
         });
 
-        // Draw pins
+        // Pins
         this.pins.forEach(pin => {
             this.drawPin(pin);
         });
 
-        // Draw UI info
+        // UI
         this.drawUI();
     }
 
     drawRope(rope, isSelected) {
-        const lineWidth = isSelected ? 6 : this.ropeWidth;
-        const opacity = isSelected ? 1 : 0.8;
+        const gradient = this.ctx.createLinearGradient(rope.startX, rope.startY, rope.endX, rope.endY);
+        gradient.addColorStop(0, rope.color);
+        gradient.addColorStop(1, "#222");
 
-        this.ctx.strokeStyle = rope.color;
-        this.ctx.globalAlpha = opacity;
-        this.ctx.lineWidth = lineWidth;
-        this.ctx.lineCap = 'round';
-        this.ctx.lineJoin = 'round';
-
-        // Draw shadow
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        this.ctx.shadowBlur = 4;
-        this.ctx.shadowOffsetX = 2;
-        this.ctx.shadowOffsetY = 2;
+        this.ctx.strokeStyle = gradient;
+        this.ctx.lineWidth = isSelected ? 6 : this.ropeWidth;
+        this.ctx.shadowColor = "rgba(0,0,0,0.4)";
+        this.ctx.shadowBlur = 6;
 
         this.ctx.beginPath();
         this.ctx.moveTo(rope.startX, rope.startY);
-
-        // Draw through loops
-        rope.loops.forEach(loop => {
-            this.ctx.lineTo(loop.pinX, loop.pinY);
-        });
-
+        rope.loops.forEach(loop => this.ctx.lineTo(loop.pinX, loop.pinY));
         this.ctx.lineTo(rope.endX, rope.endY);
         this.ctx.stroke();
 
-        this.ctx.globalAlpha = 1;
-        this.ctx.shadowColor = 'transparent';
+        this.ctx.shadowBlur = 0;
 
-        // Draw rope ends (handles)
+        // Rope ends
         this.ctx.fillStyle = rope.color;
         this.ctx.beginPath();
         this.ctx.arc(rope.startX, rope.startY, 8, 0, Math.PI * 2);
         this.ctx.fill();
-
-        this.ctx.fillStyle = rope.color;
         this.ctx.beginPath();
         this.ctx.arc(rope.endX, rope.endY, 8, 0, Math.PI * 2);
         this.ctx.fill();
     }
 
     drawPin(pin) {
-        // Pin shadow
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         this.ctx.beginPath();
         this.ctx.arc(pin.x + 2, pin.y + 2, this.pinRadius + 1, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // Pin body (metallic)
         const pinGradient = this.ctx.createRadialGradient(pin.x - 2, pin.y - 2, 0, pin.x, pin.y, this.pinRadius);
         pinGradient.addColorStop(0, '#e2e8f0');
         pinGradient.addColorStop(1, '#64748b');
@@ -471,7 +390,6 @@ class UntieRopeGame {
         this.ctx.arc(pin.x, pin.y, this.pinRadius, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // Pin highlight
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         this.ctx.beginPath();
         this.ctx.arc(pin.x - 3, pin.y - 3, this.pinRadius * 0.4, 0, Math.PI * 2);
@@ -479,7 +397,6 @@ class UntieRopeGame {
     }
 
     drawUI() {
-        // Level info
         this.ctx.fillStyle = '#f1f5f9';
         this.ctx.font = 'bold 16px sans-serif';
         this.ctx.fillText(`Level ${this.level}`, 60, 30);
@@ -487,7 +404,6 @@ class UntieRopeGame {
         this.ctx.fillStyle = '#cbd5e1';
         this.ctx.fillText(`Moves: ${this.moves}`, 60, 50);
 
-        // Instructions
         this.ctx.font = '12px sans-serif';
         this.ctx.fillStyle = '#94a3b8';
         this.ctx.fillText('Drag rope ends to untangle • Snap to grid', 60, this.boardSize - 20);
