@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zen Puzzles - Therapeutic Game Suite</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Babylon.js and physics engine -->
+    <script src="https://cdn.jsdelivr.net/npm/babylonjs@6.0.0/babylon.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cannon@0.20.0/build/cannon.js"></script>
 </head>
 <body>
     <div id="app" class="app">
@@ -181,13 +184,13 @@
                 
                 <div class="help-section">
                     <h3>🔗 Untie the Rope</h3>
-                    <p>Physically move ropes on a board to untangle complex knots.</p>
+                    <p>Watch the physical ropes untangle as you manipulate them.</p>
                     <ul>
-                        <li>Click and drag the colored rope ends to move them</li>
-                        <li>Ropes automatically snap to the grid for precision</li>
-                        <li>Rearrange ropes so they don't cross each other</li>
-                        <li>When ropes are untangled, you complete the level</li>
-                        <li>Use strategic planning to find the solution</li>
+                        <li>The ropes are powered by physics simulation</li>
+                        <li>Rotate your view using the mouse (click and drag)</li>
+                        <li>Ropes will naturally settle and untangle with gravity</li>
+                        <li>The game detects when ropes are fully untangled</li>
+                        <li>Each level introduces more complex knots</li>
                     </ul>
                 </div>
                 
@@ -221,10 +224,7 @@
     <script src="gameEngine.js"></script>
     <script src="colorSort.js"></script>
     <script src="paintNumbers.js"></script>
-
-    <!-- IMPORTANT: Untie Rope must be loaded as a module -->
-    <script type="module" src="./untieRope.js"></script>
-
+    <script src="untieRope.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
