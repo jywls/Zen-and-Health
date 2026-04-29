@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zen Puzzles - Therapeutic Game Suite</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Babylon.js and physics engine -->
+    <!-- Babylon.js and physics engine - MUST load first -->
     <script src="https://cdn.jsdelivr.net/npm/babylonjs@6.0.0/babylon.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cannon@0.20.0/build/cannon.js"></script>
 </head>
@@ -220,11 +220,15 @@
         </div>
     </div>
     
-    <!-- Load game scripts -->
+    <!-- Load game scripts in order - gameEngine.js first, then other game scripts -->
     <script src="gameEngine.js"></script>
     <script src="colorSort.js"></script>
     <script src="paintNumbers.js"></script>
-    <script src="untieRope.js"></script>
-    <script src="app.js"></script>
+    
+    <!-- untieRope.js MUST be loaded after Babylon and Cannon are available -->
+    <script defer src="untieRope.js"></script>
+    
+    <!-- app.js MUST be last so all games are initialized -->
+    <script defer src="app.js"></script>
 </body>
 </html>
