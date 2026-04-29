@@ -1,5 +1,5 @@
 // untieRope.js - 3D Rope Physics Game
-// Using Babylon.js for 3D rendering and physics
+// Using Babylon.js with Babylon's native physics (Havok)
 
 class UntieRopeGame {
   constructor() {
@@ -8,7 +8,6 @@ class UntieRopeGame {
     this.engine = null;
     this.scene = null;
     this.camera = null;
-    this.physics = null;
     this.ropes = [];
     this.pins = [];
     this.selectedRope = null;
@@ -43,8 +42,6 @@ class UntieRopeGame {
     // Create Babylon scene
     this.engine = new BABYLON.Engine(canvas, true);
     this.scene = new BABYLON.Scene(this.engine);
-    this.scene.collisionsEnabled = true;
-    this.scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
 
     // Camera
     this.camera = new BABYLON.UniversalCamera('camera', new BABYLON.Vector3(0, 30, 80));
@@ -52,6 +49,7 @@ class UntieRopeGame {
     this.camera.inertia = 0.7;
     this.camera.angularSensibility = 1000;
     this.camera.speed = 0;
+    this.camera.minZ = 0.1;
 
     // Lighting
     const ambientLight = new BABYLON.HemisphericLight('ambient', new BABYLON.Vector3(0, 1, 0), this.scene);
@@ -60,28 +58,19 @@ class UntieRopeGame {
     const pointLight = new BABYLON.PointLight('pointLight', new BABYLON.Vector3(20, 40, 20), this.scene);
     pointLight.intensity = 0.8;
 
-    // Physics engine
-    const gravityVector = new BABYLON.Vector3(0, -9.81, 0);
-    const physicsPlugin = new BABYLON.CannonJSPlugin();
-    this.scene.enablePhysics(gravityVector, physicsPlugin);
-
     // Ground
     const ground = BABYLON.MeshBuilder.CreateGround('ground', { width: 100, height: 100 }, this.scene);
     ground.material = new BABYLON.StandardMaterial('groundMat', this.scene);
     ground.material.diffuse = new BABYLON.Color3(0.2, 0.2, 0.3);
-    ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, friction: 0.5 }, this.scene);
 
     // Create level
     this.createLevel();
-
-    // Input handling
-    this.setupInputHandling(canvas);
 
     // Render loop
     this.running = true;
     this.engine.runRenderLoop(() => {
       if (this.running) {
-        this.updateRopesDisplay();
+        this.updateRopesPhysics();
         this.checkPuzzleSolved();
         this.scene.render();
       }
@@ -117,21 +106,19 @@ class UntieRopeGame {
   }
 
   createPin(id, x, z) {
-    const pinMesh = BABYLON.MeshBuilder.CreateSphere('pin_' + id, { diameter: 1.5 }, this.scene);
+    const pinMesh = BABYLON.MeshBuilder.CreateSphere('pin_' + id, { diameter: 1.5, segments: 16 }, this.scene);
     pinMesh.position = new BABYLON.Vector3(x, 1, z);
 
     const pinMaterial = new BABYLON.StandardMaterial('pinMat_' + id, this.scene);
     pinMaterial.diffuse = new BABYLON.Color3(0.7, 0.7, 0.7);
     pinMaterial.specularColor = new BABYLON.Color3(1, 1, 1);
+    pinMaterial.specularPower = 32;
     pinMesh.material = pinMaterial;
-
-    const pinPhysics = new BABYLON.PhysicsImpostor(pinMesh, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 0, restitution: 0.3 }, this.scene);
 
     this.pins.push({
       id,
       mesh: pinMesh,
-      position: new BABYLON.Vector3(x, 1, z),
-      physics: pinPhysics
+      position: new BABYLON.Vector3(x, 1, z)
     });
   }
 
@@ -164,21 +151,20 @@ class UntieRopeGame {
       }
 
       // Create rope segment
-      const segmentMesh = BABYLON.MeshBuilder.CreateSphere('rope_' + ropeIdx + '_' + i, { diameter: 0.4 }, this.scene);
+      const segmentMesh = BABYLON.MeshBuilder.CreateSphere('rope_' + ropeIdx + '_' + i, { diameter: 0.4, segments: 8 }, this.scene);
       segmentMesh.position = pos;
 
       const ropeMaterial = new BABYLON.StandardMaterial('ropeMat_' + ropeIdx + '_' + i, this.scene);
       ropeMaterial.diffuse = this.colorToVector(color);
+      ropeMaterial.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
       segmentMesh.material = ropeMaterial;
-
-      const mass = i === 0 || i === segments - 1 ? 0 : 0.05;
-      const physics = new BABYLON.PhysicsImpostor(segmentMesh, BABYLON.PhysicsImpostor.SphereImpostor, { mass, friction: 0.3, restitution: 0.2 }, this.scene);
 
       ropeParticles.push({
         mesh: segmentMesh,
-        physics,
-        mass,
-        id: i
+        velocity: new BABYLON.Vector3(0, 0, 0),
+        mass: i === 0 || i === segments - 1 ? 0 : 0.05,
+        id: i,
+        pinned: i === 0 || i === segments - 1
       });
     }
 
@@ -192,8 +178,8 @@ class UntieRopeGame {
       ropeConstraints.push({
         p1: current,
         p2: next,
-        restDistance: distance * 1.1,
-        stiffness: 0.95
+        restDistance: distance * 1.05,
+        stiffness: 0.98
       });
     }
 
@@ -208,30 +194,65 @@ class UntieRopeGame {
     });
   }
 
-  updateRopesDisplay() {
-    // Apply distance constraints
-    this.ropes.forEach(rope => {
-      rope.constraints.forEach(constraint => {
-        const delta = constraint.p2.mesh.position.subtract(constraint.p1.mesh.position);
-        const distance = delta.length();
-        const difference = (distance - constraint.restDistance) / distance;
+  updateRopesPhysics() {
+    const dt = 0.016; // ~60fps
+    const gravity = new BABYLON.Vector3(0, -9.81, 0);
+    const damping = 0.99;
+    const constraintIterations = 5;
 
-        if (distance > constraint.restDistance * 1.05) {
-          const correction = delta.scale(difference * (1 - constraint.stiffness) * 0.5);
-          if (constraint.p1.mass > 0) {
-            constraint.p1.mesh.position.subtractInPlace(correction);
+    this.ropes.forEach(rope => {
+      // Verlet integration for particle physics
+      rope.particles.forEach(particle => {
+        if (particle.pinned || particle.mass === 0) return;
+
+        const oldPos = particle.mesh.position.clone();
+        const acc = gravity.scale(1 / particle.mass);
+
+        particle.velocity.addInPlace(acc.scale(dt));
+        particle.velocity.scaleInPlace(damping);
+
+        particle.mesh.position.addInPlace(particle.velocity.scale(dt));
+      });
+
+      // Constraint satisfaction (multiple iterations for stability)
+      for (let iter = 0; iter < constraintIterations; iter++) {
+        rope.constraints.forEach(constraint => {
+          const delta = constraint.p2.mesh.position.subtract(constraint.p1.mesh.position);
+          const distance = delta.length();
+          const difference = (distance - constraint.restDistance) / distance;
+
+          if (Math.abs(difference) > 0.01) {
+            const correction = delta.scale(difference * (1 - constraint.stiffness) * 0.5);
+
+            if (!constraint.p1.pinned && constraint.p1.mass > 0) {
+              constraint.p1.mesh.position.subtractInPlace(correction);
+            }
+            if (!constraint.p2.pinned && constraint.p2.mass > 0) {
+              constraint.p2.mesh.position.addInPlace(correction);
+            }
           }
-          if (constraint.p2.mass > 0) {
-            constraint.p2.mesh.position.addInPlace(correction);
+        });
+      }
+
+      // Collision with pins
+      rope.particles.forEach(particle => {
+        if (particle.pinned) return;
+
+        this.pins.forEach(pin => {
+          const diff = particle.mesh.position.subtract(pin.position);
+          const dist = diff.length();
+          const minDist = 1.5; // pin radius + particle radius
+
+          if (dist < minDist) {
+            const normal = diff.normalize();
+            particle.mesh.position = pin.position.add(normal.scale(minDist));
           }
-        }
+        });
       });
     });
   }
 
   checkPuzzleSolved() {
-    // Robust untangle detection
-    // Check if all ropes are not intersecting and are mostly untangled
     let allUntangled = true;
 
     for (let i = 0; i < this.ropes.length; i++) {
@@ -239,6 +260,8 @@ class UntieRopeGame {
 
       // Check rope straightness (untangled ropes should be relatively straight)
       let totalDeflection = 0;
+      let deflectionCount = 0;
+
       for (let j = 1; j < rope1.particles.length - 1; j++) {
         const p1 = rope1.particles[j - 1].mesh.position;
         const p2 = rope1.particles[j].mesh.position;
@@ -246,24 +269,29 @@ class UntieRopeGame {
 
         const v1 = p2.subtract(p1).normalize();
         const v2 = p3.subtract(p2).normalize();
-        const angle = Math.acos(Math.min(1, Math.max(-1, BABYLON.Vector3.Dot(v1, v2))));
+        const dotProduct = Math.min(1, Math.max(-1, BABYLON.Vector3.Dot(v1, v2)));
+        const angle = Math.acos(dotProduct);
+
         totalDeflection += angle;
+        deflectionCount++;
       }
 
-      const averageDeflection = totalDeflection / (rope1.particles.length - 2);
+      const averageDeflection = deflectionCount > 0 ? totalDeflection / deflectionCount : 0;
 
       // If rope is still too curled up, it's tangled
-      if (averageDeflection > 0.3) {
+      if (averageDeflection > 0.25) {
         allUntangled = false;
         break;
       }
 
       // Check for intersections with other ropes
-      for (let k = i + 1; k < this.ropes.length; k++) {
-        const rope2 = this.ropes[k];
-        if (this.ropesIntersect(rope1, rope2)) {
-          allUntangled = false;
-          break;
+      if (allUntangled) {
+        for (let k = i + 1; k < this.ropes.length; k++) {
+          const rope2 = this.ropes[k];
+          if (this.ropesIntersect(rope1, rope2)) {
+            allUntangled = false;
+            break;
+          }
         }
       }
 
@@ -277,7 +305,7 @@ class UntieRopeGame {
 
   ropesIntersect(rope1, rope2) {
     // Check if two ropes are intersecting by sampling points along each rope
-    const sampleSize = 5;
+    const sampleSize = Math.max(1, Math.floor(rope1.particles.length / 5));
 
     for (let i = 0; i < rope1.particles.length; i += sampleSize) {
       for (let j = 0; j < rope2.particles.length; j += sampleSize) {
@@ -286,8 +314,8 @@ class UntieRopeGame {
 
         const distance = BABYLON.Vector3.Distance(p1, p2);
 
-        // If ropes get too close (within 1.5 units), they're intersecting
-        if (distance < 1.5) {
+        // If ropes get too close (within 1.2 units), they're intersecting
+        if (distance < 1.2) {
           return true;
         }
       }
@@ -300,7 +328,7 @@ class UntieRopeGame {
     this.running = false;
     gameStateManager.updateGameLevel('untieRope', this.level + 1);
     const message = `Level ${this.level} Complete!`;
-    const stats = `Moves: ${this.moves}`;
+    const stats = `Puzzle Solved!`;
     showVictoryModal(message, stats, () => this.nextLevel());
   }
 
@@ -315,7 +343,7 @@ class UntieRopeGame {
   colorToVector(colorName) {
     const colors = {
       red: new BABYLON.Color3(1, 0, 0),
-      blue: new BABYLON.Color3(0, 0, 1),
+      blue: new BABYLON.Color3(0, 0.5, 1),
       green: new BABYLON.Color3(0, 1, 0),
       yellow: new BABYLON.Color3(1, 1, 0),
       purple: new BABYLON.Color3(1, 0, 1),
@@ -324,16 +352,6 @@ class UntieRopeGame {
       orange: new BABYLON.Color3(1, 0.65, 0)
     };
     return colors[colorName] || colors.blue;
-  }
-
-  setupInputHandling(canvas) {
-    // Handle clicks to select/interact with ropes (optional for future enhancements)
-    canvas.addEventListener('click', (event) => {
-      const pickResult = this.scene.pick(event.clientX, event.clientY);
-      if (pickResult.hit && pickResult.pickedMesh) {
-        // Could implement rope grabbing/dragging here
-      }
-    });
   }
 }
 
