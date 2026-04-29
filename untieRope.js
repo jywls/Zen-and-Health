@@ -158,5 +158,18 @@ class UntieRopeGame {
   }
 }
 
-// expose globally
-window.untieRopeGame = new UntieRopeGame();
+// Create global instance
+const untieRopeGameInstance = new UntieRopeGame();
+
+// Export global functions that app.js expects
+window.initUntieRope = function(level) {
+  untieRopeGameInstance.initialize(level);
+};
+
+window.resetUntieRope = function() {
+  untieRopeGameInstance.reset();
+};
+
+window.undoUntieRope = function() {
+  untieRopeGameInstance.undo();
+};
