@@ -161,3 +161,4 @@ class PaintNumbersGame {
 }
 
 const paintNumbersGame = new PaintNumbersGame();
+}
